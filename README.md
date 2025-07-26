@@ -5,7 +5,7 @@
 
 ---
 
-**brackieChecker** checks a file for brackets or quotes whithout a matching opening or closing counterpart.
+**brackieChecker** checks a file for brackets or quotes whithout a matching opening or closing counterpart. ***This is currently a prototype and extremely broken, please do not digitally form an angry mob, you have been warned.***
 
 ---
 
@@ -21,5 +21,6 @@ Below is a guide to setup your **brackieChecker**, only in 2 steps!
 It will print out a copy of the file along with BALANCED or UNBALANCED and, if so, a line describing the first faulty bracket/quote.
 
 There is one issue: if you use an escape character and a quote, it will break. We'll get to fixing that later, hehe...
+Currently the entire thing is broken, will fix!!!
 
 Thank you for using **brackieChecker**!
