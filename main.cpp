@@ -2,113 +2,126 @@
 #include <fstream>
 #include <stack>
 #include <string>
+#include <vector>
 
 using namespace std;
 
-bool isBalanced(const string& expression){
+vector<string> isBalanced(const string& expression) {
+    vector<string> errors;
     stack<pair<char, int>> brackies;
     bool singleComment = false;
     bool multiComment = false;
     bool quotes = false;
     bool singleQuotes = false;
     int lineNumber = 1;
-    for(int i = 0; i < expression.length(); i++){
-        char ch = expression[i]; 
-        if(ch == '\n') {
+
+    for (int i = 0; i < expression.length(); i++) {
+        char ch = expression[i];
+        if (ch == '\n') {
             lineNumber++;
             singleComment = false;
             continue;
         }
-        char next;
-        if (i+1 < expression.length()){
-            next = expression[i+1];
-        } else {
-            next = '\0';
-        }
-        
-        //comments check
-        if(!quotes && !singleQuotes){
-            //single-line comment checker
+
+        char next = (i + 1 < expression.length()) ? expression[i + 1] : '\0';
+
+        // Comment check
+        if (!quotes && !singleQuotes) {
             if (!multiComment && !singleComment && ch == '/' && next == '/') {
                 singleComment = true;
                 i++;
                 continue;
             }
-            //opening multi-line comment checker
-            if (!multiComment && ch == '/' && next == '*'){
+            if (!multiComment && ch == '/' && next == '*') {
                 multiComment = true;
                 i++;
                 continue;
             }
-            //closing multi-line comment checker
-            if (multiComment && ch == '*' && next == '/'){
+            if (multiComment && ch == '*' && next == '/') {
                 multiComment = false;
                 i++;
                 continue;
             }
         }
+
         if (singleComment || multiComment) continue;
-        //single
-        if (!quotes && ch == '\'' && expression[i-1] != '\\'){
-           singleQuotes = !singleQuotes; 
-           continue;
+
+
+        if (!quotes && ch == '\'' && (i == 0 || expression[i - 1] != '\\')) {
+            singleQuotes = !singleQuotes;
+            continue;
         }
-        //double
-        if (!singleQuotes && ch == '"' && expression[i-1] != '\\'){
+        if (!singleQuotes && ch == '"' && (i == 0 || expression[i - 1] != '\\')) {
             quotes = !quotes;
             continue;
         }
 
-        if ( quotes || singleQuotes) continue;
-        if(ch == '(' || ch == '{' || ch == '[') {
+        if (quotes || singleQuotes) continue;
+
+        if (ch == '(' || ch == '{' || ch == '[') {
             brackies.push({ch, lineNumber});
-        } else if(ch == ')' || ch == '}' || ch == ']' ){
+        } else if (ch == ')' || ch == '}' || ch == ']') {
             if (brackies.empty()) {
-                cout << "Mismatched closing bracket '" << ch << "' at line " << lineNumber << " Contains no opening bracket" << endl;
-                return false;
+                errors.push_back("Mismatched closing bracket '" + string(1, ch) +
+                                 "' at line " + to_string(lineNumber) +
+                                 " — no matching opening bracket.");
+                continue;
             }
             char top = brackies.top().first;
             int openingLine = brackies.top().second;
             brackies.pop();
-            if ((ch == ')' && top != '(') || (ch == '}' && top != '{') || (ch == ']' && top != '[') )
-            {
-                cout << "Mismatched  bracket '" << top << "' opened at line " <<  openingLine << " But closed with '" << ch << "' at line" << lineNumber << endl;
-                return false;
+            if ((ch == ')' && top != '(') || (ch == '}' && top != '{') || (ch == ']' && top != '[')) {
+                errors.push_back("Mismatched bracket '" + string(1, top) +
+                                 "' opened at line " + to_string(openingLine) +
+                                 " but closed with '" + string(1, ch) +
+                                 "' at line " + to_string(lineNumber) + ".");
             }
         }
     }
-    if (!brackies.empty()){
-        cout << "Unmatched opening bracket '" << brackies.top().first << "' at line " << brackies.top().second << endl;
-        return false;
+
+    // Check for remaining unmatched opening brackets
+    while (!brackies.empty()) {
+        errors.push_back("Unmatched opening bracket '" + string(1, brackies.top().first) +
+                         "' at line " + to_string(brackies.top().second) + ".");
+        brackies.pop();
     }
-    return true;
+
+    return errors;
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 2){
+    if (argc < 2) {
         cout << "Usage: " << argv[0] << " <filename>" << endl;
         return 1;
     }
+
     string file = argv[1];
     ifstream infile(file);
-    if (!infile){
+    if (!infile) {
         cout << "Error: Could not open file" << endl;
         return 1;
     }
+
     string line, expression;
-    while (getline(infile, line)){
+    while (getline(infile, line)) {
         expression += line + "\n";
     }
     infile.close();
-    cout << expression;
+
     if (expression.empty()) {
-        cout << "Warning: File is empty. \n";
+        cout << "Warning: File is empty.\n";
         return 1;
     }
-    if(isBalanced(expression)){
-        cout << "BALANCED (:" << endl;
-    } else{
-        cout << "UNBALANCED ):" << endl;
+
+    vector<string> errors = isBalanced(expression);
+    if (errors.empty()) {
+        cout << "BALANCED (: " << endl;
+    } else {
+        cout << "UNBALANCED ): Found " << errors.size() << " issue(s):" << endl;
+        for (const string& error : errors) {
+            cout << " - " << error << endl;
+        }
     }
+
     return 0;
 }
